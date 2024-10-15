@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Weather App</title>
+    <link rel="stylesheet" type="text/css" href="style.css">
+    <script src="https://cdn.jsdelivr.net/npm/vue@2"></script> <!-- Include Vue.js -->
+
+</head>
+<body>
+    <div id="app">
+        <div class="background-half container">
+            <div class="dialogue-box">
+                <form @submit.prevent="handleFormSubmit">
+                    <input type="text" v-model="city" placeholder="Enter city">
+                </form>
+                <div id="errorMessage" style="color: red;">{{ errorMessage }}</div>
+            </div>
+            <div id="displayInput">{{ displayInput }}</div>
+            <div class="content">
+                
+                    <button id="todayButton">Today</button>
+                    <button id="3daysButton">3 Days</button>
+                    <button id="airQualityButton">Air Quality</button>
+                    <button id="newFeatButton">Landscape & Tourism</button>
+                    <button id="infoButton">About us</button>
+            </div>
+            <div id="displayInput"></div>
+        </div>
+    </div>
+    
+    
+    <script src="searchscript.js"></script>
+    <!-- <script src="todayButtonscript.js"></script>-->
+</body>
+</html>

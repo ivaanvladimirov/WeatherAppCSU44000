@@ -1,48 +1,107 @@
 /* style.css */
 
-.background-half {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 30%;
-    background-color: transparent; /* Set a transparent background color */
-    background-image: url("./yellow.webp"); /* Add the background image */
-    background-size: cover; /* Ensure the image covers the entire container */
-    background-position: center; /* Center the image */
-    z-index: 1; /* Ensure the background is behind other content */
-    margin: 0; /* Remove all margins */
+body {
+    font-family: Arial, sans-serif;
+    background-color: #f0f0f0;
+    margin: 0;
+    padding: 0;
 }
 
-.header {
+.flex-container {
+    display: flex;
+    justify-content: space-between;
     padding: 20px;
-    text-align: center;
-    background-color: #f9f9f9;
+}
+
+.left-column {
+    flex: 1;
+    margin-right: 20px;
+}
+
+.right-column {
+    flex: 1;
+    max-width: 400px;
+}
+
+.background-half {
+    width: 100%;
+    height: 100%;
+    background-size: cover;
+    background-position: center;
+}
+
+.container {
+    position: relative;
+    padding: 20px;
+    margin: 0 auto;
+    background-color: white;
     border-radius: 10px;
-    margin-top: 20px;
-    margin-bottom: 20px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    transform-origin: 0 0;
+    transition: transform 0.3s ease;
 }
 
 .dialogue-box {
-    margin: 20px auto 0 auto; /* Remove top margin, center horizontally */
+    margin: 20px auto;
     padding: 20px;
-    width: 200px; /* Make the dialogue box smaller */
-    border-radius: 10px; /* Make the dialogue box rounded */
+    width: 100%;
+    border-radius: 10px;
     background-color: #f9f9f9;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* Add a subtle shadow */
-}
-
-.dialogue-box form {
-    display: flex;
-    flex-direction: column;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
 }
 
 .dialogue-box input[type="text"] {
-    padding: 10px; /* Add padding to make it look like a single piece */
-    border: none; /* Remove the border */
-    border-radius: 10px; /* Match the border radius of the dialogue box */
-    background-color: #f9f9f9; /* Match the background color of the dialogue box */
-    box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.1); /* Add a subtle inner shadow */
-    font-size: 16px; /* Increase font size for better readability */
-    outline: none; /* Remove the outline on focus */
+    width: 100%;
+    padding: 10px;
+    border: none;
+    border-radius: 10px;
+    background-color: #e9e9e9;
+    box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.1);
+    font-size: 16px;
+    outline: none;
+}
+
+.content {
+    text-align: center;
+    margin-top: 20px;
+}
+
+.content button {
+    padding: 10px 20px;
+    margin: 5px;
+    border: none;
+    border-radius: 10px;
+    background-color: #4CAF50;
+    color: white;
+    font-size: 16px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+.content button:hover {
+    background-color: #45a049;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 20px;
+}
+
+table, th, td {
+    border: 1px solid #ddd;
+}
+
+th, td {
+    padding: 12px;
+    text-align: left;
+}
+
+th {
+    background-color: #f2f2f2;
+}
+
+td img {
+    width: 50px;
+    height: 50px;
 }

@@ -4,33 +4,73 @@
     <meta charset="UTF-8">
     <title>Weather App</title>
     <link rel="stylesheet" type="text/css" href="style.css">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
     <script src="https://cdn.jsdelivr.net/npm/vue@2"></script> <!-- Include Vue.js -->
-
+    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script> <!-- Include Leaflet.js -->
 </head>
 <body>
     <div id="app">
-        <div class="background-half container">
-            <div class="dialogue-box">
-                <form @submit.prevent="handleFormSubmit">
-                    <input type="text" v-model="city" placeholder="Enter city">
-                </form>
-                <div id="errorMessage" style="color: red;">{{ errorMessage }}</div>
+        <div class="zoom-container">
+            <div class="background-half container" :style="{ backgroundColor: backgroundColor }">
+                <div class="dialogue-box">
+                    <form @submit.prevent="handleFormSubmit">
+                        <input type="text" v-model="city" placeholder="Enter city" id="userInput">
+                    </form>
+                    <div id="errorMessage" style="color: red;">{{ errorMessage }}</div>
+                </div>
+                <div id="displayInput">{{ displayInput }}</div>
+                <div class="content">
+                    <button @click="handleTodayButtonClick">Today</button>
+                    <button @click="handle3DaysButtonClick">3 Days</button>
+                    <button @click="handleAirQualityButtonClick">Air Quality</button>
+                    <button @click="handleNewFeatButtonClick">Landscape & Tourism</button>
+                    <button @click="handleInfoButtonClick">About us</button>
+                </div>
+                <div v-if="weatherData">
+                    <h3>Today's Weather</h3>
+                    <p>Weather: {{ description }}</p>
+                    <p>Humidity: {{ weatherData.main.humidity }}%</p>
+                    <p>Wind Speed: {{ weatherData.wind.speed }} m/s</p>
+                    <p>Pressure: {{ weatherData.main.pressure }} hPa</p>
+                    <p v-if="showUmbrellaIcon">Umbrella Icon: <img src="umbrella.webp" alt="Umbrella Icon"></p>
+                </div>
+                <div v-if="forecastData">
+                    <h3>3-Day Forecast</h3>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Weather</th>
+                                <th>Temperature</th>
+                                <th>Weather Icon</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr v-for="(day, index) in forecastData" :key="index">
+                                <td>{{ day.date }}</td>
+                                <td>
+                                    <div v-for="(forecast, idx) in day.forecasts" :key="idx">
+                                        <p>{{ forecast.time }}: {{ forecast.weather[0].description }}</p>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div v-for="(forecast, idx) in day.forecasts" :key="idx">
+                                        <p>{{ forecast.time }}: {{ forecast.temperature }} °C</p>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div v-for="(forecast, idx) in day.forecasts" :key="idx">
+                                        <img :src="'http://openweathermap.org/img/w/' + forecast.weather[0].icon + '.png'">
+                                    </div>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div id="map" style="height: 400px;"></div> <!-- Map container -->
             </div>
-            <div id="displayInput">{{ displayInput }}</div>
-            <div class="content">
-                
-                    <button id="todayButton">Today</button>
-                    <button id="3daysButton">3 Days</button>
-                    <button id="airQualityButton">Air Quality</button>
-                    <button id="newFeatButton">Landscape & Tourism</button>
-                    <button id="infoButton">About us</button>
-            </div>
-            <div id="displayInput"></div>
         </div>
     </div>
-    
-    
-    <script src="searchscript.js"></script>
-    <!-- <script src="todayButtonscript.js"></script>-->
+    <script src="app.js"></script>
 </body>
 </html>

@@ -1,4 +1,6 @@
 const apiKey = '47f3ad18870adefc1fd086cb168886d5';
+const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+const months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
 
 new Vue({
     el: '#app',
@@ -8,11 +10,66 @@ new Vue({
         displayInput: '',
         weatherData: null,
         forecastData: null,
-        forecastWeatherData: null, // Nueva propiedad para manejar el clima del pronóstico
+        airData: null,
+        forecastWeatherData: null, 
         description: '',
-        userCoordinates: null
+        userCoordinates: null,
+        formattedDate: '',
+        formattedDateToday : '',
+        loading: false,
+        cityName: '',
+        countryName: '',
+        latitudeProperty: '',
+        longitudeProperty: '',
+        co: '',
+        co2: '',
+        no2: '',
+        o3: '',
+        pm2_5: '',
+        pm10: '',
+        so2: '',
+        nh3: '',
+        airquality: '',
+        activated3days : false,
+        activatedAirQuality : false
+
+
     },
     methods: {
+
+        getCauseOfLowerAQI() {
+            const pollutants = {
+                O3: this.o3,
+                PM10: this.pm10,
+                PM2_5: this.pm2_5,
+                NO2: this.no2,
+                CO: this.co,
+                SO2: this.so2,
+            };
+    
+            const pollutantThresholds = {
+                O3: 60,
+                PM10: 20,
+                PM2_5: 10,
+                NO2: 40,
+                CO: 4400,
+                SO2: 20,
+            };
+    
+            let causeOfLowerAQI = [];
+            for (const pollutant in pollutants) {
+                if (pollutants[pollutant] > pollutantThresholds[pollutant]) {
+                    causeOfLowerAQI.push(pollutant);
+                }
+            }
+    
+            if (causeOfLowerAQI.length > 0) {
+                return `The pollutant(s) causing AQI to be worse: ${causeOfLowerAQI.join(', ')}`;
+            } else {
+                return "All pollutants are within good levels.";
+            }
+        },
+        
 
         auxDisplay(temp) {
             
@@ -32,6 +89,7 @@ new Vue({
                 return;
             }
             this.errorMessage = "";
+            this.loading = true;
 
             const apiUrl = `https://api.openweathermap.org/data/2.5/weather?q=${this.city}&appid=${apiKey}&units=metric`;
 
@@ -42,11 +100,50 @@ new Vue({
                 }
                 const data = await response.json();
                 this.weatherData = data;
+                this.weatherData.main.temp = Math.round(this.weatherData.main.temp);
+                this.weatherData.rain = data.rain;
+                
                 this.description = this.auxDisplay(data.main.temp);
                 
                 this.displayInput = `You entered: ${this.city}`;
+
+                const d = new Date();
+                const dayName = days[d.getDay()];
+                const monthName = months[d.getMonth()];
+                const day = d.getDate();
+                const year = d.getFullYear();
+
+                this.formattedDateToday = `${dayName}, ${day} ${monthName} ${year}`;
+                
+                
+                let geoApiUrl = `https://api.openweathermap.org/geo/1.0/direct?q=${this.city}&limit=1&appid=${apiKey}`;
+                try {
+                    const response = await fetch(geoApiUrl);
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                const data = await response.json();
+                
+                let {name, lat, lon, country} = data[0];
+                this.cityName = name;
+                this.countryName = country;
+                this.latitudeProperty = lat;
+                this.longitudeProperty = lon;
+
+                } catch (error) {
+                this.errorMessage = `Error: ${error.message}`;  
+                }
             } catch (error) {
                 this.errorMessage = `Error: ${error.message}`;
+            }
+            finally {
+                this.loading = false;
+                if(this.activated3days){
+                    this.handle3DaysButtonClick();
+                }
+                if(this.activatedAirQuality){
+                    this.handleAirQualityButtonClick();
+                }
             }
         },
         async handle3DaysButtonClick() {
@@ -55,6 +152,7 @@ new Vue({
                 this.displayInput = "";
                 return;
             }
+            this.loading = true;
             this.errorMessage = "";
         
             const apiUrl = `https://api.openweathermap.org/data/2.5/forecast?q=${this.city}&appid=${apiKey}&units=metric`;
@@ -65,59 +163,102 @@ new Vue({
                     throw new Error('Network response was not ok');
                 }
                 const data = await response.json();
-                
+                this.activated3days = true;
+
                 const groupedData = {};
                 
                 data.list.forEach(item => {
-                    const date = item.dt_txt.split(' ')[0];  // Extrae solo la fecha
+                    const date = item.dt_txt.split(' ')[0];  
                     console.log(item.weather[0]);
                     if (!groupedData[date]) {
                         groupedData[date] = {
-                            temps: [],
-                            weather: item.weather[0],  // Guarda el primer clima del día
-                            rainChance: item.pop * 100  // Probabilidad de lluvia (como porcentaje)
+                            temps: [], 
+                            weather: item.weather[0],  
+                            rainChance: Math.round(item.pop * 100).toFixed(0),  
+                            windSpeeds: [] 
+
                         };
                     }
                     
-                    groupedData[date].temps.push(item.main.temp);  // Guarda las temperaturas del día
+                    groupedData[date].temps.push(item.main.temp);  
+                    groupedData[date].windSpeeds.push(item.wind.speed);
+
                 });
         
-                // Transforma los datos agrupados en un array con la información requerida
+               
                 this.forecastData = Object.keys(groupedData).slice(0, 3).map(date => {
+                    const d = new Date(date);
+                    const dayName = days[d.getDay()];
+                    const monthName = months[d.getMonth()];
+                    const day = d.getDate();
+                    const year = d.getFullYear();
+                    this.formattedDate = `${dayName}, ${day},    ${monthName} ${year}`;
+                    
                     const temps = groupedData[date].temps;
                     let maxTemp = Math.round(Math.max(...temps));
                     let minTemp = Math.round(Math.min(...temps));
                     let averageTemp = maxTemp + minTemp / 2;
                     return {
-                        date: date,
+                        date: this.formattedDate,
                         maxTemp: maxTemp,
                         minTemp: minTemp,
-                        weatherDescription: this.auxDisplay(averageTemp),  // Usa auxDisplay con la temperatura máxima
-                        rainChance: groupedData[date].rainChance
+                        weatherDescription: this.auxDisplay(averageTemp),  
+                        rainChance: groupedData[date].rainChance,
+                        avgWindSpeed: (groupedData[date].windSpeeds.reduce((a, b) => a + b, 0) / groupedData[date].windSpeeds.length).toFixed(2)  
                     };
                 });
-                this.forecastWeatherData = { temp: this.forecastData[0].maxTemp }; // Actualizamos forecastWeatherData
-                this.displayInput = `3-Day Forecast for: ${this.city}`;
+                this.forecastWeatherData = { temp: this.forecastData[0].maxTemp }; 
             } catch (error) {
                 this.errorMessage = `Error: ${error.message}`;
             }
-        }   ,
+            finally {
+                this.loading = false;
+            }
+        },
         handleTodayButtonClick() {
             this.handleFormSubmit();
         },
-        handleAirQualityButtonClick() {
-            // Implement the logic for fetching and displaying air quality data
+        async handleAirQualityButtonClick() {
+            if (this.city.trim() === "") {
+                this.errorMessage = "Input cannot be empty.";
+                this.displayInput = "";
+                return;
+            }
+            this.errorMessage = "";
+            this.loading = true;
+            const airApiCall = `http://api.openweathermap.org/data/2.5/air_pollution?lat=${this.latitudeProperty}&lon=${this.longitudeProperty}&appid=${apiKey}`;
+            
+            try {
+                const response = await fetch(airApiCall);
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                const data = await response.json();
+                this.activatedAirQuality = true;
+                this.airData = data;
+                let {co, no, no2, o3, so2, pm2_5, pm10, nh3} = data.list[0].components;
+                this.co = co;
+                this.no = no;
+                this.no2 = no2;
+                this.o3 = o3;
+                this.pm2_5 = pm2_5;
+                this.pm10 = pm10;
+                this.so2 = so2;
+                this.nh3 = nh3;
+                this.airquality = data.list[0].main.aqi;
+                
+            } catch (error) {
+                
+                this.errorMessage = `Error: ${error.message}`;
+            } finally {
+                this.loading = false; 
+            }
+            
         },
         handleNewFeatButtonClick() {
             // Implement the logic for fetching and displaying landscape & tourism data
         },
-        handleInfoButtonClick() {
-            // Implement the logic for displaying information about the app
-        },
-        
-        getWeatherIcon(iconCode) {
-            return `https://openweathermap.org/img/wn/${iconCode}@2x.png`;
-        },
+    
         getUserCoordinates() {
             if (navigator.geolocation) {
                 navigator.geolocation.getCurrentPosition(position => {
@@ -136,34 +277,34 @@ new Vue({
         },
         displayMap() {
             if (this.userCoordinates) {
-                const map = L.map('map').setView([this.userCoordinates.latitude, this.userCoordinates.longitude], 13);
-                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                
+                let map = L.map('map').setView([this.userCoordinates.latitude, this.userCoordinates.longitude], 4); 
+                
+                
+                L.tileLayer(`https://api.maptiler.com/maps/hybrid/{z}/{x}/{y}.jpg?key=WA2dNh7InZuBzttxGdeH`, {
+                    
                 }).addTo(map);
-                L.marker([this.userCoordinates.latitude, this.userCoordinates.longitude]).addTo(map)
-                    .bindPopup('You are here.')
-                    .openPopup();
+                L.control.rainviewer({
+                    position: 'bottomleft',
+                    nextButtonText: '>',
+                    playStopButtonText: 'Play/Stop',
+                    prevButtonText: '<',
+                    positionSliderLabelText: "Hour:",
+                    opacitySliderLabelText: "Opacity:",
+                    animationInterval: 2000,
+                    opacity: 0.5
+                }).addTo(map);
+                    
+                
+                const marker = L.marker([this.userCoordinates.latitude, this.userCoordinates.longitude]).addTo(map);
+                marker.bindPopup('You are here!').openPopup();
             }
         }
         
         
+        
     },
-    computed: {
-        backgroundColor() {
-            if (this.weatherData && this.weatherData.main) {
-                const temp = this.weatherData.main.temp || this.forecastWeatherData.temp;
-
-                if (temp > 24) {
-                    return '#FF5733'; // Hot - Red
-                } else if (temp >= 8 && temp <= 24) {
-                    return '#FFE797'; // Warm - Yellow
-                } else if (temp < 8) {
-                    return '#3498DB'; // Cool - Light Green
-                } 
-            }
-            return '#FFFFFF'; // Default - White
-        }
-    },
+    
     mounted() {
         this.getUserCoordinates();
     }
